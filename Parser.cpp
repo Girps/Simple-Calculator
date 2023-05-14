@@ -1,5 +1,8 @@
 #include "Parser.h"
 
+
+
+
 /*
 	Parse constructor passes argStack to initalize memeber stack
 */
@@ -24,6 +27,7 @@ double Parser::getResult()
 	it is a valid parsing tree 
 */
 void Parser::syntax_Analysis()
+
 {
 	
 	// starts here 
@@ -35,40 +39,60 @@ void Parser::syntax_Analysis()
 /*
 	Void function parses each token asscoiated with rule Expression 
 		
-	Expression -> Term PLUS Expression 
-	Expression -> Term MINUS Expression 
+	exp -> term exp2 
 
 */
 double Parser::parse_Expression()
-
 {
-	
-	double left = parse_Term(); 
-	
-	Token t2 = getToken(); 
-
-
-	while (true)
+	Token t = getToken();
+	double left = 0.0; 
+	if (t.kind == DOUBLE || t.kind == LEFTPAREN || t.kind == MINUS) 
 	{
-		if (t2.kind == PLUS)
-		{
-
-			left += parse_Term();
-			t2 = getToken();
-		}
-		else if (t2.kind == MINUS)
-		{
-			left -= parse_Term();
-			t2 = getToken();
-		}
-		else
-		{
-			ungetToken(t2); 
-			return left; 
-		}
+		ungetToken(t);
+		left = parse_Term(); // always returns a number 
+		left = parse_Expression2(left); // pass the number 
+		return left; 
+	}
+	else 
+	{
+		syntax_Error(); 
 	}
 
 }
+
+/*
+	exp2 -> PLUS term exp2 
+	exp2 -> MINUS term exp2 
+	exp2 -> EPSION 
+*/
+double Parser::parse_Expression2(double arg)
+{
+	Token t = getToken(); 
+	if (t.kind == PLUS) 
+	{
+		// Consume + 
+		arg += parse_Term(); 
+		arg = parse_Expression2(arg); 
+		return arg; 
+	}
+	else if (t.kind == MINUS)
+	{
+		// Consume - 
+		arg -= parse_Term();
+		arg = parse_Expression2(arg);
+		return arg; 
+	}
+	else if (t.kind == ENDOFFILE || t.kind == RIGHTPAREN)  // epsilion 
+	{
+		ungetToken(t);
+		return arg; 
+	}
+	else 
+	{
+		syntax_Error(); 
+	}
+}
+
 
 
 /*
@@ -76,101 +100,189 @@ double Parser::parse_Expression()
 	calls corresponding rules
 
 	
-	Term -> Primary Term Mulitply Primary 
-	Term -> Primary Term Divide Primary
-	Term -> Primary Term Divisor Primary 
+	term -> primary term2  
 */
 double Parser::parse_Term() 
 {
-	double left{ 0 }; 
-
-	left = parse_Primary(); 
-	
-	// getToken again 
-	 Token t2 = getToken(); 
-
-
-	while (true) 
-	{
-		if (t2.kind == MULIIPLY) 
-		{
-			// Consume * 
-			left *= parse_Primary(); 
-			t2 = getToken(); 
-		}
-		else if (t2.kind == DIVIDE)
-		{
-			double temp = parse_Primary();
-			if (temp == 0) 
-			{
-				throw std::runtime_error("Can not divide by 0");
-			}
-			// Consume  
-			left /= temp; 
-			t2 = getToken(); 
-		}
-		else
-		{
-			// just return the value of left since next token is another rule
-			ungetToken(t2); 
-			return left;  
-		}
-	}
-
-	return left; 
-}
-
-/*
-	Primary -> Number 
-	Primary -> LeftParen Expression RightParen 
-*/
-double Parser::parse_Primary() 
-{
+	double left = 0; 
 	Token t = getToken(); 
-	double left{ 0 }; 
-	if (t.kind == LEFTPAREN) 
+	if (t.kind == DOUBLE || t.kind == LEFTPAREN || t.kind == MINUS) 
 	{
-		// consume token (
-		left = parse_Expression();
-
-		// Consume token ) 
-		t = getToken(); 
-
-		if (t.kind != RIGHTPAREN) 
-		{
-			syntax_Error(); 
-		}
-		
-	}
-	else if (t.kind == DOUBLE) 
-	{
-		// let number hajdle it
 		ungetToken(t);
-		left = parse_Number(); 
-	}
-	else 
-	{
-		syntax_Error(); 
-		return 0; 
-	}
-
-	return left; 
-	
-}
-
-double Parser::parse_Number()  
-{
-	Token t = getToken(); 
-	double left = t.value; 
-	if (t.kind == DOUBLE) 
-	{
-		// just consume the token
+		left = parse_Primary(); 
+		left = parse_Term2(left); // pass the primary for evaluation? 
 		return left; 
 	}
 	else 
 	{
 		syntax_Error(); 
-		return 0; 
+	}
+}
+
+
+/*
+	term2 -> MULT primary term2 
+	term2 -> DIV primary term2
+	term2 -> ( exp ) primary2 term2 
+	term2 -> EPSILON 
+	
+*/
+double Parser::parse_Term2(double arg) 
+{
+	Token t = getToken();
+	if (t.kind == MULIIPLY) 
+	{
+		// consumed * 
+		arg *= parse_Primary();
+		arg = parse_Term2(arg);
+		return arg; 
+	}
+	else if (t.kind == DIVIDE) 
+	{
+		// consumed /
+		double res  = parse_Primary();
+		if (res == 0) 
+		{
+			throw std::runtime_error("ERROR: DIVIDE BY 0");
+		}
+		arg /= res; 
+		arg = parse_Term2(arg);
+		return arg;
+		
+	}
+	else if (t.kind == LEFTPAREN) 
+	{
+		double mult = arg; 
+		// consumed ( 
+		arg = parse_Expression();
+		// Consume ) 
+		t = getToken();
+		if (t.kind != RIGHTPAREN) 
+		{
+			syntax_Error(); 
+		}
+		
+		arg = mult * parse_Primary2(arg) ;
+		arg = parse_Term2(arg);
+		return arg;
+	}
+	else if (t.kind == ENDOFFILE || t.kind == MINUS ||
+		t.kind == PLUS || t.kind == RIGHTPAREN) 
+	{
+		ungetToken(t);
+		return arg; 
+	}
+	else 
+	{
+		syntax_Error(); 
+	}
+	
+}
+
+
+/*
+	primary -> factor primary2 
+*/
+double Parser::parse_Primary() 
+{
+	Token t = getToken();
+	double left = 0.0; 
+	if (t.kind == LEFTPAREN || t.kind == DOUBLE || t.kind == MINUS) 
+	{
+		ungetToken(t);
+		left = parse_Factor(); 
+		left = parse_Primary2(left); // pass arg for exponent evaluation
+		return left; 
+	}
+	else 
+	{
+		syntax_Error(); 
+	}
+}
+
+/*
+	primary2 -> EXPONENT factor primary2
+	primary2 -> EPSILON 
+*/
+double Parser::parse_Primary2(double arg) 
+{
+	Token t = getToken(); 
+	double exp = 0.0;
+	if (t.kind == EXPONENT) 
+	{
+		// consume EXPONENT
+		exp = parse_Factor();
+		exp = parse_Primary2(exp); 
+		// evluate the exponent 
+		exp = std::pow(arg,exp); 
+			return exp; 
+	}
+	else if (t.kind == ENDOFFILE || t.kind == DIVIDE || t.kind == MINUS || t.kind == EXPONENT || 
+		t.kind == PLUS || t.kind == RIGHTPAREN || t.kind == MULIIPLY || t.kind == LEFTPAREN)	// epsilon
+	{
+		ungetToken(t);
+		return arg; 
+	}
+	else 
+	{
+		syntax_Error(); 
+	}
+}
+
+/*
+	Factor -> NUMBER
+	Factor -> LEFTPAREN exp RIGHTPAREN
+	Factor -> MINUS LEFTPAREN exp RIGHTPAREN 
+	Factor -> MINUS primary 
+	Should only return a literal number 
+*/
+double Parser::parse_Factor()
+{
+	double left = 0; 
+	Token t = getToken();
+	Token t2 = getToken(); 
+	if (t.kind == DOUBLE) 
+	{
+		ungetToken(t2); 
+		return t.value; 
+	}
+	else if (t.kind == LEFTPAREN) 
+	{
+		ungetToken(t2);
+		// Consume leftParen
+		left = parse_Expression(); 
+		if (getToken().kind != RIGHTPAREN) 
+		{
+			syntax_Error(); 
+		}
+		return left; 
+	}
+	else if (t.kind == MINUS && t2.kind == LEFTPAREN) 
+	{
+		// Consume both - ( 
+		left = parse_Expression();
+		
+		Token t = getToken(); 
+		if (t.kind != RIGHTPAREN) 
+		{
+			syntax_Error(); 
+		}
+		left = parse_Primary2(left);
+		left *= -1; 
+		return left; 
+	}
+	else if (t.kind == MINUS && ( t2.kind == DOUBLE ||
+			t2.kind == MINUS))	// first of primary in t2 
+	{
+		// unget t2
+		ungetToken(t2);
+		left = parse_Primary(); 
+		left *= -1; 
+		return left; 
+	}
+	else 
+	{
+		syntax_Error(); 
 	}
 }
 

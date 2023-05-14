@@ -5,7 +5,11 @@
 #include <stdexcept>
 #include <stack>
 #include "Tokenizer.h"
-
+#include "TreeNode.h"
+#include "Add.h"
+#include "Minus.h"
+#include "Mult.h"
+#include "Div.h"
 
 
 class Parser
@@ -18,11 +22,13 @@ class Parser
 	void syntax_Analysis();
 	double parse_Expression();
 	double parse_Term();
-	double parse_Primary();
+	double parse_Factor();
 	void check_EOF();
 	void syntax_Error();
-	double parse_Number(); 
-
+	double parse_Expression2(double arg);
+	double parse_Term2(double arg);
+	double parse_Primary(); 
+	double parse_Primary2(double arg); 
 
 	
 

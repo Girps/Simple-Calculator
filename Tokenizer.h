@@ -6,11 +6,21 @@
 #include <vector>
 #include<stdexcept>
 #include <sstream> 
+#include <regex>
+
+#define DOUBLE_EX "([0-9]\.[0-9]+)|([1-9]+\.[0-9]+)"	// For double representation 
+#define INT_EXP		"([0-9]|[1-9]+)"					// Integer representation 
+#define PLUS_EX	"+"
+#define	MINUS_EX "-"
+#define MULT_EX "*"
+#define DIV_EX "/"
+#define LPAREN_EXP "("
+#define RPAREN_EXP ")"
 
 // Hold the type determining what are token is 
 enum Types
 {
-	 DOUBLE, DIVSOR,PLUS, MINUS, DIVIDE, MULIIPLY, LEFTPAREN, RIGHTPAREN, ENDOFFILE
+	 DOUBLE, DIVSOR,PLUS, MINUS, DIVIDE, MULIIPLY, LEFTPAREN, RIGHTPAREN, EXPONENT, ENDOFFILE
 };
 
 /*
@@ -36,17 +46,18 @@ class Tokenizer
 
 	std::vector<Token> Tokens_List;
 	std::stack<Token>  Tokens_Stack;
-	std::vector<std::string> raw_String;
+	std::string raw_String;
 
+	
 	/*
 		Private function will tokenize a series of bytes and add them to the vector and on the stack 
 	*/
 	void Lexical_Analysis(); 
-
+	void num_Tokenizer(std::string::iterator &it);
+	void reOrderStack(); 
 	public:
 
-		/* Construuctor will recieve a list of string and parse each one using private funcitons */
-		Tokenizer(std::vector<std::string> str_List); 
+	Tokenizer(std::string str_List);
 
 
 		// Return of a vector of tokens 

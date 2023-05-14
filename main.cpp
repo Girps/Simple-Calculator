@@ -9,39 +9,18 @@ int main()
 {
 	try 
 	{
-		bool flag = true; 
-		while (flag)
-		{
-			std::string input;
-			std::stringstream buffer;
-			std::vector<std::string> v;
-			std::cout << "\Enter expression\n";
+	
+		std::string line;
 
-			std::getline(std::cin, input);
-			buffer << input;
-
-			while (buffer >> input)
-			{
-				v.push_back(input);
-			}
-
-			Tokenizer Lexer(v);	// tokenize strings  
-			Parser p(Lexer.getStack());
-			std::cout << p.getResult();
-
-
-			std::cout << "\nPress (Q) to terminate other wise any key to continue\n";
-			std::getline(std::cin, input); 
-
-			if (input == "Q" || input == "q")
-			{
-				flag = false; 
-			}
-
-
-		}
-
+		std::getline(std::cin, line); 
 		
+
+		Tokenizer t(line); 
+		auto v = t.getVector(); 
+	
+
+		Parser syn(t.getStack()); 
+		std::cout << syn.getResult(); 
 
 	}
 	catch (std::exception &e) 
