@@ -1,0 +1,32 @@
+math -> exp @
+exp -> term exp2 @
+
+exp2 -> PLUS term exp2 @
+exp2 -> MINUS term exp2 @
+exp2 -> EPSILON @
+
+term -> primary term2 @
+term2 -> MULT primary term2 @
+term2 -> DIV primary  term2 @
+term2 -> LEFTPAREN exp RIGHTPAREN primary2 term2 @
+term2 -> EPSILON @ 
+
+primary -> factor primary2 @
+primary2 -> EXPONENT factor primary2 @
+primary2 -> EPSILON @  
+
+factor -> NUMBER @
+factor -> LEFTPAREN exp RIGHTPAREN @
+factor -> MINUS LEFTPAREN exp RIGHTPAREN primary2 @
+factor -> MINUS primary @ 
+
+#
+PLUS
+MINUS
+EPSILON
+MULT
+DIV
+NUMBER
+LEFTPAREN
+RIGHTPAREN
+EXPONENT
