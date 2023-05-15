@@ -6,27 +6,42 @@
 
 
 int main() 
-{
-	try 
+{	
+	bool flag = true;
+	do
 	{
-	
-		std::string line;
+		try
+		{
 
-		std::getline(std::cin, line); 
-		
 
-		Tokenizer t(line); 
-		auto v = t.getVector(); 
-	
+			printf("\nEnter an expression Q to terminate\n >> ");
+			std::string line;
 
-		Parser syn(t.getStack()); 
-		std::cout << syn.getResult(); 
+			std::getline(std::cin, line);
 
+			if (line == "Q" || line == "q")
+			{
+				flag = false;
+			}
+			else
+			{
+				Tokenizer t(line);
+				auto v = t.getVector();
+
+				Parser syn(t.getStack());
+				std::cout << "= "  << syn.getResult();
+			}
+
+
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what();
+		}
 	}
-	catch (std::exception &e) 
-	{
-		std::cerr << e.what(); 
-	}
+	while (flag); 
+
+	printf("Program terminated");
 
 	return 0; 
 
